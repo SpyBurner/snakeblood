@@ -19,9 +19,7 @@ public class Move : MonoBehaviour
     private PhysicsMaterial2D material;
     private SwingWeapon swingScript;
     private Stats statsScript;
-
-    [NonSerialized]
-    public GameObject LaunchAttackBox;
+    [NonSerialized] public GameObject LaunchAttackBox;
 
     // Start is called before the first frame update
     void Start()
@@ -32,7 +30,6 @@ public class Move : MonoBehaviour
         statsScript = GetComponentInChildren<Stats>();
 
         LaunchAttackBox = transform.GetChild(transform.childCount - 1).gameObject;
-        LaunchAttackBox.SetActive(false);
     }
 
 
@@ -95,7 +92,6 @@ public class Move : MonoBehaviour
                 Vector2 toward_cursor = ((Vector2)(Camera.main.ScreenToWorldPoint(Input.mousePosition) - transform.position)).normalized;
                 rb.AddForce(toward_cursor * chargeforce);
                 statsScript.ragdoll(0.5f);
-                LaunchAttackBox.SetActive(true);
             }
         }
 
