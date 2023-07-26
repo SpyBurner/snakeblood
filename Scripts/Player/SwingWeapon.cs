@@ -8,8 +8,7 @@ public class SwingWeapon : MonoBehaviour
     // Start is called before the first frame update
     public GameObject weaponPrefab;
     public float swingtime = 1;
-    public float angleStart = 0;
-    public float angleEnd = 180;
+    public float swingAngle = 60;
 
     private float t;
     private float timeStart;
@@ -20,17 +19,17 @@ public class SwingWeapon : MonoBehaviour
     void Start()
     {
         attacking = false;
-        increment = MathF.Abs(angleEnd-angleStart)/(60 * swingtime);
     }
 
     private int dir = 1;
     private void Update()
     {
+        increment = swingAngle / (60 * swingtime);
         if (weaponObject != null)
         {
-            weaponObject.transform.Rotate(0, 0, -increment * dir);
+            weaponObject.transform.Rotate(0, 0, increment * dir);
 
-            if (Time.time - timeStart >= swingtime)
+            if ((Time.time - timeStart) >= swingtime)
             {
                 Destroy(weaponObject);
                 attacking = false;
@@ -46,11 +45,16 @@ public class SwingWeapon : MonoBehaviour
             weaponObject.transform.position = transform.position;
             attacking = true;
 
-            Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            if (mousePos.y >= transform.position.y) dir = -1;
-            else dir = 1;
+            float angle = -30;
 
-            weaponObject.transform.localScale = new Vector3(weaponObject.transform.localScale.x, weaponObject.transform.localScale.y * dir, weaponObject.transform.localScale.z);
+            Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            if (mousePos.y >= transform.position.y) dir = 1;
+            else dir = -1;
+            if (dir == 1) angle -= 180;
+
+            weaponObject.GetComponent<Sword>().cutDir = dir;
+
+            weaponObject.transform.localRotation = Quaternion.AngleAxis(angle, Vector3.forward);
         }
     }
 }

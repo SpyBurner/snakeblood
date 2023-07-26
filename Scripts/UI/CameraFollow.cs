@@ -5,21 +5,24 @@ using UnityEngine;
 public class CameraFollow : MonoBehaviour
 {
     public GameObject target;
-    public float deadzoneRadius;
+    public float yOffset = 0.5f;
 
     // Start is called before the first frame update
     void Start()
     {
-        if (target == null)
-        {
-            target = GameObject.FindGameObjectWithTag("Player");
-        }
 
     }
 
     // Update is called once per frame
     void Update()
     {
-        transform.position = target.transform.position + Vector3.back * 10;
+        if (target == null)
+        {
+            target = GameObject.FindGameObjectWithTag("Player");
+        }
+        if (target != null)
+        {
+            transform.position = target.transform.position + Vector3.back * 10 + Vector3.up * yOffset;
+        }
     }
 }

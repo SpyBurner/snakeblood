@@ -13,13 +13,16 @@ public class Move : MonoBehaviour
     public float chargeforce;
     public float chargedelay;
 
-
     private Animator animator;
     private Rigidbody2D rb;
 
     private PhysicsMaterial2D material;
     private SwingWeapon swingScript;
     private Stats statsScript;
+
+    [NonSerialized]
+    public GameObject LaunchAttackBox;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -27,13 +30,13 @@ public class Move : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         swingScript = GetComponentInChildren<SwingWeapon>();
         statsScript = GetComponentInChildren<Stats>();
+
+        LaunchAttackBox = transform.GetChild(transform.childCount - 1).gameObject;
+        LaunchAttackBox.SetActive(false);
     }
 
 
     private bool isMoving = false;
-
-    [NonSerialized]
-    public bool isGrounded = false;
 
     private bool isCharging = false;
     private bool isCharged = false;
@@ -52,18 +55,14 @@ public class Move : MonoBehaviour
 
     private void InputHandle()
     {
-        if (Input.GetKeyDown(KeyCode.Mouse0))
+        if (Input.GetKeyDown(KeyCode.Mouse0) && statsScript.isGrounded && !isCharging)
         {
             transform.GetComponentInChildren<SwingWeapon>().Swing();
         }
-        //position
-        if (Time.time - ragdollStart >= ragdollTime)
-        {
-            isRagdoll = false;
-        }
+
 
         Vector2 newdir = Vector2.zero;
-        if (isGrounded)
+        if (statsScript.isGrounded && !statsScript.isRagdoll)
         {
             if (!(swingScript.attacking || isCharging))
                 newdir.x += Input.GetAxisRaw("Horizontal") * movespeed;
@@ -89,13 +88,14 @@ public class Move : MonoBehaviour
         {
             isCharging = false;
             isCharged = false;
-            isGrounded = false;
+            statsScript.isGrounded = false;
             if (Time.time - charge_time_start >= chargedelay)
             {
                 transform.position = transform.position + (0.2f * Vector3.up);
                 Vector2 toward_cursor = ((Vector2)(Camera.main.ScreenToWorldPoint(Input.mousePosition) - transform.position)).normalized;
                 rb.AddForce(toward_cursor * chargeforce);
-                ragdoll(0.5f);
+                statsScript.ragdoll(0.5f);
+                LaunchAttackBox.SetActive(true);
             }
         }
 
@@ -107,16 +107,6 @@ public class Move : MonoBehaviour
         }
     }
 
-    [NonSerialized] public bool isRagdoll = false;
-    public float ragdollTime = 1;
-
-    private float ragdollStart;
-    public void ragdoll(float t)
-    {
-        ragdollStart = Time.time;
-        ragdollTime = t;
-        isRagdoll = true;
-    }
 
     private string currentState = "player_idle";
     private string nextState = "";
@@ -128,56 +118,59 @@ public class Move : MonoBehaviour
         {
             nextState = "player_dead";
         }
-        if (!isMoving && isGrounded && !statsScript.isDead)
-        {
-            int r = UnityEngine.Random.Range(0, 1000);
-            if (r != 999 && !isLicking) nextState = "player_idle";
-            else
-            {
-                nextState = "player_idle2";
-                isLicking = true;
-            }
-        }
-        if (isMoving && isGrounded)
-        {
-            nextState = "player_move";
-        }
-
-        if (isCharging)
-        {
-            nextState = "player_charging";
-            if (isCharged)
-            {
-                nextState = "player_chargeReady";
-            }
-        }
-
-        if (!isGrounded) {
-            nextState = "player_launching";
-        }
-
-        if (nextState == "player_launching")
-        {
-            // Calculate the direction from this object to the target
-            Vector2 direction = (rb.velocity).normalized;   
-            // Calculate the angle in degrees between the current forward direction and the desired direction
-            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-            // Create a rotation based on the calculated angle
-            if (transform.localScale.x > 0)
-            {
-                angle = angle - 135 - 180;
-            }
-            else
-            {
-                angle = angle - 45 - 180;
-            }
-            Quaternion rotation = Quaternion.AngleAxis(angle, Vector3.forward);
-            // Apply the rotation to this object's transform
-            transform.GetChild(0).transform.rotation = rotation;
-        }
         else
         {
-            transform.GetChild(0).transform.rotation = Quaternion.identity;
+            if (!isMoving && statsScript.isGrounded && !statsScript.isDead)
+            {
+                int r = UnityEngine.Random.Range(0, 1000);
+                if (r != 999 && !isLicking) nextState = "player_idle";
+                else
+                {
+                    nextState = "player_idle2";
+                    isLicking = true;
+                }
+            }
+            if (isMoving && statsScript.isGrounded)
+            {
+                nextState = "player_move";
+            }
+
+            if (isCharging)
+            {
+                nextState = "player_charging";
+                if (isCharged)
+                {
+                    nextState = "player_chargeReady";
+                }
+            }
+
+            if (!statsScript.isGrounded) {
+                nextState = "player_launching";
+            }
+
+            if (nextState == "player_launching")
+            {
+                // Calculate the direction from this object to the target
+                Vector2 direction = (rb.velocity).normalized;   
+                // Calculate the angle in degrees between the current forward direction and the desired direction
+                float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+                // Create a rotation based on the calculated angle
+                if (transform.localScale.x > 0)
+                {
+                    angle = angle - 135 - 180;
+                }
+                else
+                {
+                    angle = angle - 45 - 180;
+                }
+                Quaternion rotation = Quaternion.AngleAxis(angle, Vector3.forward);
+                // Apply the rotation to this object's transform
+                transform.GetChild(0).transform.rotation = rotation;
+            }
+            else
+            {
+                transform.GetChild(0).transform.rotation = Quaternion.identity;
+            }
         }
 
         if (nextState == currentState) return;

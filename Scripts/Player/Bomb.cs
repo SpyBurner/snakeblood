@@ -9,8 +9,9 @@ using UnityEngine.Rendering.Universal;
 public class Bomb : MonoBehaviour
 {
     public int damage = 0;
+    public bool friendlyFire = false;
     public float blastradiuscale = 1;
-    private float blastRadius = 1;
+    private float blastRadius = 0.2f;
 
     public float blastForce;
 
@@ -18,13 +19,20 @@ public class Bomb : MonoBehaviour
 
     private Rigidbody2D rb;
     private Animator anim;
+    private Stats statscript;
 
-    private Light2D light;
+    private Light2D attachedLight;
+    private float bomb_sprite_radius;
     private void Start()
     {
         anim = GetComponent<Animator>();
         rb = GetComponent<Rigidbody2D>();
-        light = GetComponent<Light2D>();
+        attachedLight = GetComponent<Light2D>();
+        bomb_sprite_radius = GetComponent<SpriteRenderer>().bounds.size.x / 2;
+
+        statscript = GameObject.FindGameObjectWithTag("Player").GetComponent<Stats>();
+        damage = (int)Mathf.Ceil(statscript.damage / 2.0f);
+        blastForce = 2 * statscript.knockback;
     }
 
     public Material matDetonate;
@@ -33,45 +41,49 @@ public class Bomb : MonoBehaviour
         anim.Play("bomb_blast");
         transform.rotation = Quaternion.identity;
         rb.freezeRotation = true;
-        light.intensity = 5 * blastradiuscale;
+        attachedLight.intensity = 5 * blastradiuscale;
         GetComponent<SpriteRenderer>().material = matDetonate;
+        
     }
 
     [SerializeField] LayerMask mask;
     private bool disabled = false;
     private void Update()
     {
+        //Radius debug
+        //DrawCircle(blastRadius);
+
         if (anim.GetCurrentAnimatorStateInfo(0).fullPathHash == Animator.StringToHash("Base Layer.bomb_blast") && !disabled)
         {
             gameObject.GetComponent<Rigidbody2D>().simulated = false;
             transform.localScale = transform.localScale * blastradiuscale;
 
-            transform.position = new Vector3(contactPoint.x, contactPoint.y, transform.position.z);
+            Vector3 newPos = transform.position;
+            newPos.y -= bomb_sprite_radius;
+            transform.position = newPos;
 
-            blastRadius = GetComponent<SpriteRenderer>().bounds.size.x / 2 * blastradiuscale;
-            
-            //Radius debug
-            //DrawCircle(blastRadius);
+            blastRadius = GetComponent<SpriteRenderer>().bounds.size.y / 2 * blastradiuscale;
 
             Collider2D[] cols = Physics2D.OverlapCircleAll(transform.position, blastRadius, mask);
             float destroyDelay = anim.GetCurrentAnimatorStateInfo(0).length;
             foreach (Collider2D col in cols)
             {
                 if (col.CompareTag("bomb")) continue;
+
+                Stats statsScript = col.GetComponent<Stats>();
+
+                //Player settings
                 if (col.CompareTag("Player"))
                 {
-                    col.gameObject.GetComponent<Move>().ragdoll(blastRagdollTime);
-
-                    //Bomb dmg debug
-                    col.gameObject.GetComponent<Stats>().HPchange(-damage);
+                    if (!friendlyFire) damage = 0;
                 }
-                Vector2 newDir = ((Vector2)(col.transform.position - transform.position)).normalized;
 
-                if (col.attachedRigidbody != null)
+                Vector2 newDir = ((Vector2)(col.transform.position - transform.position)).normalized; 
+
+                if (statsScript != null)
                 {
-                    col.attachedRigidbody.AddForce(newDir * blastForce);
+                    statsScript.TakeDamage(damage, newDir * blastForce);
                 }
-                    //col.attachedRigidbody.velocity = Vector2.zero;
             }
 
             disabled = true;
@@ -79,13 +91,18 @@ public class Bomb : MonoBehaviour
         }
         if (disabled)
         {
-            light.intensity -= 0.3f;
+            attachedLight.intensity -= 0.3f;
         }
     }
 
+    public float debugLineWidth = 0.1f;
     private void DrawCircle(float radius)
     {
-        LineRenderer circle = gameObject.AddComponent<LineRenderer>();
+        LineRenderer circle = GetComponent<LineRenderer>();
+        if (circle == null) circle = gameObject.AddComponent<LineRenderer>();
+
+        circle.startWidth = 0.01f;
+        circle.endWidth = 0.01f;
         circle.positionCount = 100;
 
         float theta = 0;
@@ -99,11 +116,5 @@ public class Bomb : MonoBehaviour
             circle.SetPosition(i, transform.position +  new Vector3(x, y, 0));
             
         }
-    }
-
-    Vector2 contactPoint;
-    private void OnCollisionStay2D(Collision2D collision)
-    {
-        contactPoint = collision.GetContact(0).point;
     }
 }

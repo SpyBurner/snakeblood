@@ -7,17 +7,25 @@ public class Ability : MonoBehaviour
     public GameObject bombPrefab;
 
     public float cooldownTime = 1f;
-    private float cooldownStart;
-    private bool isOnCooldown;
+    private float cooldownTimer = 0f;
+    private bool isOnCooldown = false;
     void Start()
     {
-        
     }
 
     private bool isActive = false;
     private GameObject bomb = null;
     void Update()
     {
+        if (cooldownTimer > 0)
+        {
+            cooldownTimer -= Time.deltaTime;
+        }
+        else
+        {
+            isOnCooldown = false;
+        }
+
         if (Input.GetKeyDown(KeyCode.Mouse1) && !isOnCooldown)
         {
             if (!isActive){
@@ -28,18 +36,11 @@ public class Ability : MonoBehaviour
             {
                 isActive = false;
                 isOnCooldown = true;
-                cooldownStart = Time.time;
+                cooldownTimer = cooldownTime;
 
                 bomb.GetComponent<Bomb>().Detonate();
             }
         }
 
-        if (isOnCooldown)
-        {
-            if (Time.time - cooldownStart >= cooldownTime)
-            {
-                isOnCooldown = false;
-            }
-        }
     }
 }

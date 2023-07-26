@@ -11,7 +11,8 @@ GameObject:
   - component: {fileID: 3399889884757085339}
   - component: {fileID: 3399889884757085338}
   - component: {fileID: 4177827032123493336}
-  m_Layer: 3
+  - component: {fileID: 8990677551830554400}
+  m_Layer: 0
   m_Name: weapon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -110,7 +111,22 @@ PolygonCollider2D:
   m_AutoTiling: 0
   m_Points:
     m_Paths:
-    - - {x: -0.090278655, y: 0.14867434}
-      - {x: -0.10273261, y: 0.14290243}
-      - {x: -0.036369395, y: 0.03078819}
-      - {x: -0.019442681, y: 0.04065288}
+    - - {x: -0.07469093, y: 0.19307576}
+      - {x: -0.14241047, y: 0.15329424}
+      - {x: -0.027866997, y: -0.019281484}
+      - {x: 0.023541655, y: 0.014200967}
+--- !u!114 &8990677551830554400
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3399889884757085316}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 831991b8d9dbb664da19a14f2ae25527, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  knockback: 5
+  damage: 0
+  stunTime: 0.3
